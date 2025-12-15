@@ -57,7 +57,7 @@ class PageViewSet(viewsets.ModelViewSet):
             if new_status == 'private' and in_groups('Super Admin', 'Administrator', 'Editor'):
                 serializer.save(author=instance.author); return
             elif new_status == 'private':
-                raise PermissionDenied("Only Super Admin, Administrator, Editor can set posts to private, Even if you are the owner.")
+                raise PermissionDenied("Only Super Admin, Administrator, Editor can set pages to private, Even if you are the owner.")
             
             if new_status == 'draft':
                 serializer.save(author=instance.author); return
@@ -66,7 +66,7 @@ class PageViewSet(viewsets.ModelViewSet):
         if in_groups('Super Admin', 'Administrator', 'Editor'):
             serializer.save(author=instance.author); return
         else:
-            raise PermissionDenied("You are not allowed to update this post.")
+            raise PermissionDenied("You are not allowed to update this pages.")
         
     
     
@@ -81,12 +81,12 @@ class PageViewSet(viewsets.ModelViewSet):
             if instance.status == 'publish' and in_groups('Super Admin', 'Administrator', 'Editor', 'Author'):
                 instance.delete(); return
             elif instance.status == 'publish':
-                raise PermissionDenied("Only Super Admin, Administrator, Editor, Author can delete published posts, Even if you are the owner.")
+                raise PermissionDenied("Only Super Admin, Administrator, Editor, Author can delete published pages, Even if you are the owner.")
             
             if instance.status == 'private' and in_groups('Super Admin', 'Administrator', 'Editor'):
                 instance.delete(); return
             elif instance.status == 'private':
-                raise PermissionDenied("Only Super Admin, Administrator, Editor can delete private posts, Even if you are the owner.")
+                raise PermissionDenied("Only Super Admin, Administrator, Editor can delete private pages, Even if you are the owner.")
             
             if instance.status == 'draft':
                 instance.delete(); return
@@ -95,7 +95,7 @@ class PageViewSet(viewsets.ModelViewSet):
         if in_groups('Super Admin', 'Administrator', 'Editor'):
             instance.delete(); return
         else:
-            raise PermissionDenied("You are not allowed to delete this post.")
+            raise PermissionDenied("You are not allowed to delete this pages.")
         
     def get_queryset(self):
         qs = super().get_queryset()
@@ -108,11 +108,4 @@ class PageViewSet(viewsets.ModelViewSet):
         if in_groups('Super Admin', 'Administrator', 'Editor'):
             return qs
         
-        # === AUTHENTICATED USER CAN SEE THEIR OWN POSTS AND PUBLIC POSTS ===
-        if user.is_authenticated:
-            return qs.filter(models.Q(status='publish') | models.Q(author=user))
-        else:
-            # === ANONYMOUS USER CAN ONLY SEE PUBLISHED POSTS ===
-            return qs.filter(status='publish')
-        
-
+        return qs.filter(models.Q(status='publish') | models.Q(author=user))
