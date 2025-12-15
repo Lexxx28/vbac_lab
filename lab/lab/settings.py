@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'media',
     'page',
     'plugin',
+    'theme',
+    'comment',
 ]
 
 MIDDLEWARE = [

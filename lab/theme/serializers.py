@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from .models import Plugin
+from .models import Theme
 
 
-class PluginSerializer(serializers.HyperlinkedModelSerializer):
+class ThemeSerializer(serializers.HyperlinkedModelSerializer):
     
     class Meta:
-        model = Plugin
-        fields = ['id', 'name', 'version', 'is_active', 'settings']
+        model = Theme
+        fields = ['id', 'name', 'version', 'is_active', 'options']
         read_only_fields = ['created_at', 'updated_at']
 
     def __str__(self):
