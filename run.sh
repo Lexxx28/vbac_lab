@@ -1,0 +1,10 @@
+#!/bin/bash
+cd lab
+
+python3 manage.py makemigrations
+python3 manage.py migrate
+python3 seeder.py
+
+python3 manage.py runserver 0.0.0.0:8000
+
+wait
