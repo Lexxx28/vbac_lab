@@ -28,4 +28,5 @@ urlpatterns = [
     path('api/', include('page.urls')),
     path('api/', include('plugin.urls')),
     path('api/', include('comment.urls')),
+    path('api/', include('theme.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

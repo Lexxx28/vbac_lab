@@ -22,11 +22,19 @@ if __name__ == '__main__':
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from post.models import Post
+from page.models import Page
 from media.models import Media
+from comment.models import Comment
+from theme.models import Theme
+from plugin.models import Plugin
 
 def clear_data():
     """Clear existing data"""
     print("🗑️  Clearing existing data...")
+    Plugin.objects.all().delete()
+    Theme.objects.all().delete()
+    Comment.objects.all().delete()
+    Page.objects.all().delete()
     Media.objects.all().delete()
     Post.objects.all().delete()
     User.objects.filter(is_superuser=False).delete()
@@ -139,6 +147,69 @@ def create_posts(users):
         print(f"  ✅ Created: {post.title} ({post.status}) by {post.author.username}")
     
     return created_posts
+
+def create_pages(users):
+    """Create sample pages"""
+    print("\n📄 Creating pages...")
+
+    pages_data = [
+        # Public pages
+        {
+            'title': 'Home',
+            'content': 'Welcome to our site. This is the home page with featured content and latest updates.',
+            'author': 'Administrator',
+            'status': 'publish',
+        },
+        {
+            'title': 'About',
+            'content': 'This page tells the story of our team, our mission, and our values.',
+            'author': 'Editor',
+            'status': 'publish',
+        },
+        {
+            'title': 'Contact',
+            'content': 'Get in touch with us using the contact information and form on this page.',
+            'author': 'Editor',
+            'status': 'publish',
+        },
+        {
+            'title': 'Privacy Policy',
+            'content': 'This page describes how we handle your data and respect your privacy.',
+            'author': 'Administrator',
+            'status': 'publish',
+        },
+        # Draft / private utility pages
+        {
+            'title': 'Landing Page Draft',
+            'content': 'Work-in-progress landing page content for upcoming campaign.',
+            'author': 'Author',
+            'status': 'draft',
+        },
+        {
+            'title': 'Internal Docs',
+            'content': 'Internal documentation page intended for staff only.',
+            'author': 'Super Admin',
+            'status': 'private',
+        },
+    ]
+
+    created_pages = []
+    for page_data in pages_data:
+        author = users.get(page_data['author'])
+        if not author:
+            print(f"  ⚠️  Skipping page '{page_data['title']}' - author not found")
+            continue
+
+        page = Page.objects.create(
+            title=page_data['title'],
+            content=page_data['content'],
+            author=author,
+            status=page_data['status'],
+        )
+        created_pages.append(page)
+        print(f"  ✅ Created: {page.title} ({page.status}) by {page.author.username}")
+
+    return created_pages
 
 def generate_image(text, color, size=(800, 600)):
     """Generate a simple image with text"""
@@ -262,7 +333,205 @@ def create_media(users):
     
     return created_media
 
-def print_summary(users, posts, media):
+def create_themes():
+    """Create sample themes"""
+    print("\n🎨 Creating themes...")
+
+    themes_data = [
+        {
+            'name': 'Default Theme',
+            'version': '1.0.0',
+            'is_active': True,
+            'options': {
+                'color_scheme': 'light',
+                'show_featured_image': True,
+                'layout': 'blog_right_sidebar',
+            },
+        },
+        {
+            'name': 'Dark Mode',
+            'version': '1.1.0',
+            'is_active': False,
+            'options': {
+                'color_scheme': 'dark',
+                'show_featured_image': True,
+                'layout': 'full_width',
+            },
+        },
+        {
+            'name': 'Minimal',
+            'version': '0.9.0',
+            'is_active': False,
+            'options': {
+                'color_scheme': 'light',
+                'show_featured_image': False,
+                'layout': 'blog_no_sidebar',
+            },
+        },
+    ]
+
+    created_themes = []
+    for data in themes_data:
+        theme, created = Theme.objects.get_or_create(
+            name=data['name'],
+            defaults={
+                'version': data['version'],
+                'is_active': data['is_active'],
+                'options': data['options'],
+            },
+        )
+        if not created:
+            theme.version = data['version']
+            theme.is_active = data['is_active']
+            theme.options = data['options']
+            theme.save()
+        created_themes.append(theme)
+        status = "active" if theme.is_active else "installed (inactive)"
+        print(f"  ✅ {theme.name} {theme.version} - {status}")
+
+    # Ensure only one active theme (like WordPress)
+    active_themes = Theme.objects.filter(is_active=True).order_by('id')
+    if active_themes.count() > 1:
+        # Keep the first active, deactivate others
+        for t in active_themes[1:]:
+            t.is_active = False
+            t.save()
+
+    return created_themes
+
+def create_plugins():
+    """Create sample plugins"""
+    print("\n🔌 Creating plugins...")
+
+    plugins_data = [
+        {
+            'name': 'SEO Optimizer',
+            'version': '1.0.0',
+            'is_active': True,
+            'settings': {
+                'meta_description_length': 160,
+                'auto_generate_sitemaps': True,
+                'focus_keyword_support': True,
+            },
+        },
+        {
+            'name': 'Contact Form',
+            'version': '2.1.3',
+            'is_active': True,
+            'settings': {
+                'store_entries': True,
+                'send_email_notifications': True,
+                'spam_protection': 'honeypot',
+            },
+        },
+        {
+            'name': 'Analytics Tracker',
+            'version': '0.9.5',
+            'is_active': False,
+            'settings': {
+                'provider': 'google_analytics',
+                'anonymize_ip': True,
+            },
+        },
+        {
+            'name': 'Cache Booster',
+            'version': '1.2.0',
+            'is_active': False,
+            'settings': {
+                'enable_page_cache': True,
+                'minify_css': True,
+                'minify_js': True,
+            },
+        },
+    ]
+
+    created_plugins = []
+    for data in plugins_data:
+        plugin, created = Plugin.objects.get_or_create(
+            name=data['name'],
+            defaults={
+                'version': data['version'],
+                'is_active': data['is_active'],
+                'settings': data['settings'],
+            },
+        )
+        if not created:
+            plugin.version = data['version']
+            plugin.is_active = data['is_active']
+            plugin.settings = data['settings']
+            plugin.save()
+        created_plugins.append(plugin)
+        status = "activated" if plugin.is_active else "installed (inactive)"
+        print(f"  ✅ {plugin.name} {plugin.version} - {status}")
+
+    return created_plugins
+
+def create_comments(users, posts):
+    """Create sample comments for posts"""
+    print("\n💬 Creating comments...")
+
+    if not posts:
+        print("  ⚠️  No posts available, skipping comments")
+        return []
+
+    comments_data = [
+        {
+            'post_index': 0,
+            'author': 'subscriber',
+            'content': 'Great post! Really enjoyed reading this.',
+        },
+        {
+            'post_index': 0,
+            'author': 'contributor',
+            'content': 'I have some additional ideas to add to this topic.',
+        },
+        {
+            'post_index': 1,
+            'author': 'author',
+            'content': 'Happy to answer questions about our team here.',
+        },
+        {
+            'post_index': 2,
+            'author': 'subscriber',
+            'content': 'Thanks for the heads-up about maintenance.',
+        },
+        {
+            'post_index': 6,
+            'author': 'editor',
+            'content': 'We will refine these guidelines based on feedback.',
+        },
+        {
+            'post_index': 10,
+            'author': 'subscriber',
+            'content': 'Looking forward to reading this review when it is ready!',
+        },
+    ]
+
+    created_comments = []
+    posts_list = list(posts)
+
+    for data in comments_data:
+        idx = data['post_index']
+        if idx >= len(posts_list):
+            continue
+
+        try:
+            user = User.objects.get(username=data['author'])
+        except User.DoesNotExist:
+            user = None
+
+        comment = Comment.objects.create(
+            post=posts_list[idx],
+            author=user,
+            content=data['content'],
+        )
+        created_comments.append(comment)
+        username = user.username if user else "anonymous"
+        print(f"  ✅ Comment on '{comment.post.title}' by {username}")
+
+    return created_comments
+
+def print_summary(users, posts, pages, media, comments, themes, plugins):
     """Print summary of seeded data"""
     print("\n" + "="*60)
     print("📊 SEEDING SUMMARY")
@@ -276,6 +545,11 @@ def print_summary(users, posts, media):
     print(f"   • Published: {sum(1 for p in posts if p.status == 'publish')}")
     print(f"   • Draft: {sum(1 for p in posts if p.status == 'draft')}")
     print(f"   • Private: {sum(1 for p in posts if p.status == 'private')}")
+
+    print(f"\n📄 Pages created: {len(pages)}")
+    print(f"   • Published: {sum(1 for p in pages if p.status == 'publish')}")
+    print(f"   • Draft: {sum(1 for p in pages if p.status == 'draft')}")
+    print(f"   • Private: {sum(1 for p in pages if p.status == 'private')}")
     
     print(f"\n🖼️  Media files created: {len(media)}")
     if media:
@@ -284,6 +558,20 @@ def print_summary(users, posts, media):
         pdf_count = sum(1 for m in media if m.file.name.endswith('.pdf'))
         print(f"   • Images: {image_count}")
         print(f"   • PDFs: {pdf_count}")
+
+    print(f"\n💬 Comments created: {len(comments)}")
+
+    print(f"\n🎨 Themes created: {len(themes)}")
+    if themes:
+        active = sum(1 for t in themes if t.is_active)
+        print(f"   • Active: {active}")
+        print(f"   • Inactive: {len(themes) - active}")
+
+    print(f"\n🔌 Plugins created: {len(plugins)}")
+    if plugins:
+        active_plugins = sum(1 for p in plugins if p.is_active)
+        print(f"   • Active: {active_plugins}")
+        print(f"   • Inactive: {len(plugins) - active_plugins}")
     
     print("\n🔐 Login Credentials:")
     print("   All users have password as username")
@@ -311,9 +599,13 @@ def run_seeder(clear_existing=True):
     groups = create_groups()
     users = create_users()
     posts = create_posts(users)
+    pages = create_pages(users)
     media = create_media(users)
-    
-    print_summary(users, posts, media)
+    comments = create_comments(users, posts)
+    themes = create_themes()
+    plugins = create_plugins()
+
+    print_summary(users, posts, pages, media, comments, themes, plugins)
 
 if __name__ == '__main__':
     # Run the seeder
